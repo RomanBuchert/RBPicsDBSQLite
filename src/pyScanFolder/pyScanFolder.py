@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 '''
 Created on 11.07.2013
 
@@ -76,37 +78,40 @@ def addBilder2Db(Pfad, EmptyDatabase = False):
     Dateien.sort()
     for Datei in Dateien:
         if Datei.endswith(".jpg"):
-            if EmptyDatabase == False:
-                SQL="SELECT Count(*) FROM Bilder WHERE Name = '%s' AND Pfad = '%s' "%(Datei, PfadId)
-                cursor.execute(SQL)
-                Antwort = cursor.fetchone()
-            else:
-                Antwort = 0
-                
-            if Antwort == 0:
-                Md5 = md5ForFile('%s/%s'%(Pfad,Datei))
-                exif = pyexiv2.ImageMetadata('%s/%s'%(Pfad,Datei))
-                try :
-                    exif.read()
-                    (Width, Height) = exif.dimensions
-                except:
-                    Width = 0
-                    Height = 0
-                
-                datum = (Datei, PfadId, Width, Height, Md5)
-                daten.append(datum)
-                if len(daten) == 1000:
-                    addBild2Db(daten)
-                    daten = []
-    
+            Md5 = md5ForFile('%s/%s'%(Pfad,Datei))
+            exif = pyexiv2.ImageMetadata('%s/%s'%(Pfad,Datei))
+            try :
+                exif.read()
+                (Width, Height) = exif.dimensions
+            except:
+                Width = 0
+                Height = 0
+            
+            datum = (Datei, PfadId, Width, Height, Md5)
+            daten.append(datum)
+            if len(daten) == 1000:
+                addBild2Db(daten)
+                daten = []
+
     if daten != None:        
         addBild2Db(daten)
 
 def addBild2Db(Daten):
+    dataInserted = False
     cursor = verbindung.cursor()
-    SQL="INSERT INTO Bilder(Name, Pfad, Width, Height, Md5Sum) VALUES(?, ?, ?, ?, ?)"
-    cursor.executemany(SQL, Daten)
-    verbindung.commit()
+    cursor.execute("BEGIN")
+    for commit in Daten:
+        SQL="INSERT INTO Bilder(Name, Pfad, Width, Height, Md5Sum) VALUES('%s', %s, %s, %s, '%s')" %(commit)
+        try:
+            cursor.execute(SQL)
+            dataInserted = True
+        except sqlite3.DatabaseError as detail:
+            if not "not unique" in detail.message:
+                print "InsertError: %s" %detail
+    
+    if dataInserted == True: 
+        #cursor.execute("COMMIT")
+        verbindung.commit()
 
 def addPath2Db(Pfad):
     cursor = verbindung.cursor()
