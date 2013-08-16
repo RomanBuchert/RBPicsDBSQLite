@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 Created on 11.07.2013
 
@@ -9,7 +11,7 @@ import sys
 import os
 import sqlite3
 import ConfigParser
-import time
+import datetime
 import pyexiv2
 
 
@@ -28,6 +30,7 @@ def main():
     PicDirectory = './'
     SleepTime = 60
     LinkName = 'Bild.jpg' 
+    
     try:
         opts, _ = getopt.getopt(argv[1:], 'hf:d:t:l:', ['help', 'file=', 'directory=', 'listdirs', 'time=', 'linkto='])
     except getopt.GetoptError as detail:
@@ -88,8 +91,9 @@ def main():
     updateBildinfo(BildId)
 
 def updateBildinfo(BildId):
+    jetzt = datetime.datetime.now() 
     cursor = verbindung.cursor()
-    SQL = "UPDATE Bilder SET ViewCntr = ViewCntr + 1 WHERE ID = %s" %BildId
+    SQL = "UPDATE Bilder SET ViewCntr = ViewCntr + 1, LastViewed = '%s' WHERE ID = %s" %(jetzt.isoformat(),BildId)
     cursor.execute(SQL)
     verbindung.commit()
 
