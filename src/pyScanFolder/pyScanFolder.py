@@ -172,7 +172,7 @@ def newTables():
         Width INTEGER,\
         Height INTEGER,\
         Depth INTEGER,\
-        MD5Sum TEXT,\
+        MD5Sum TEXT UNIQUE,\
         ViewCntr INTEGER NOT NULL DEFAULT 0,\
         LastViewed DATE)"
     cursor.execute(SQL)
